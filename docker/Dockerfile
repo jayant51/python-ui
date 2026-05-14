@@ -1,7 +1,7 @@
 # Dockerfile for Service Selector Dashboard
 # Optimized for OpenShift Container Platform (OCP) deployment
 
-FROM python:3.11-slim
+FROM python:3.12 
 
 # Set working directory
 WORKDIR /app
