@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Cost & Analytics Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        /* Tab Navigation */
+        .tab-container {
+            background: white;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .tab-nav {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px 20px;
+            background: #f5f5f5;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.3s ease;
+            border-right: 1px solid #ddd;
+        }
+
+        .tab-button:last-child {
+            border-right: none;
+        }
+
+        .tab-button:hover {
+            background: #e8e8e8;
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            margin-bottom: -3px;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 40px;
+            background: white;
+            border-radius: 0 0 20px 20px;
+            min-height: 600px;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Calculator Styles */
+        .calculations-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .graphs-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        .graphs-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .image-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-container h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .image-caption {
+            color: #666;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .section-divider {
+            border-top: 2px solid #e0e0e0;
+            margin: 30px 0;
+            padding-top: 30px;
+        }
+
+        .section-title {
+            color: #667eea;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            color: #333;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 20px;
+            padding-right: 40px;
+        }
+
+        select:hover {
+            border-color: #667eea;
+            background-color: #fff;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .calculate-pm-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .calculate-pm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+        }
+
+        .reset-btn {
+            background: #f0f0f0;
+            color: #555;
+        }
+
+        .reset-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .result p {
+            color: #555;
+            margin: 8px 0;
+            font-size: 15px;
+        }
+
+        .result strong {
+            color: #333;
+        }
+
+        .consumption-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .profit-margin-box {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .consumption-box h4,
+        .profit-margin-box h4 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .consumption-value,
+        .profit-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .consumption-details,
+        .profit-details {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .breakdown {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .formula-display {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            color: #667eea;
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 1200px) {
+            .calculations-row,
+            .graphs-container {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-nav {
+                flex-wrap: wrap;
+            }
+
+            .tab-button {
+                flex: 1 1 50%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1>Service Cost & Analytics Dashboard</h1>
+            <p>Comprehensive service analysis with interactive visualizations</p>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab-nav">
+                <button class="tab-button active" onclick="openTab(event, 'calculator')">Calculator</button>
+                <button class="tab-button" onclick="openTab(event, 'trends')">Trends</button>
+                <button class="tab-button" onclick="openTab(event, 'analysis')">Analysis</button>
+                <button class="tab-button" onclick="openTab(event, 'comparison')">Comparison</button>
+                <button class="tab-button" onclick="openTab(event, 'financial')">Financial Metrics</button>
+                <button class="tab-button" onclick="openTab(event, 'dashboard')">Full Dashboard</button>
+            </div>
+
+            <!-- Tab 1: Calculator -->
+            <div id="calculator" class="tab-content active">
+                <div class="calculations-row">
+                    <!-- Service Configuration Calculator -->
+                    <div class="container">
+                        <h2>Service Configuration</h2>
+                        
+                        <form id="serviceForm">
+                            <div class="form-group">
+                                <label for="useCaseType">Use Case Type</label>
+                                <select id="useCaseType" name="useCaseType" required>
+                                    <option value="">-- Select Use Case Type --</option>
+                                    <option value="Generative AI" data-value="150">Generative AI (150 units)</option>
+                                    <option value="App_Modernization" data-value="100">App Modernization (100 units)</option>
+                                    <option value="Cloud_Modernization" data-value="120">Cloud Modernization (120 units)</option>
+                                    <option value="Advanced_Data_Integration" data-value="180">Advanced Data Integration (180 units)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="serviceType">Service Type</label>
+                                <select id="serviceType" name="serviceType" required>
+                                    <option value="">-- Select Service Type --</option>
+                                    <option value="Cloud_Services" data-value="80">Cloud Services (80 units)</option>
+                                    <option value="Analytics_and_BI" data-value="95">Analytics and BI (95 units)</option>
+                                    <option value="AI_Services" data-value="110">AI Services (110 units)</option>
+                                </select>
+                            </div>
+
+                            <div class="button-group">
+                                <button type="submit" class="submit-btn">Calculate Consumption</button>
+                                <button type="reset" class="reset-btn">Reset</button>
+                            </div>
+                        </form>
+
+                        <div id="result" class="result">
+                            <h3>Selected Configuration:</h3>
+                            <p><strong>Use Case Type:</strong> <span id="selectedUseCase"></span></p>
+                            <p><strong>Service Type:</strong> <span id="selectedService"></span></p>
+                            
+                            <div class="consumption-box">
+                                <h4>Monthly Consumption</h4>
+                                <div class="consumption-value" id="totalConsumption">0</div>
+                                <div class="consumption-details">units per month</div>
+                                
+                                <div class="breakdown">
+                                    <div class="breakdown-item">
+                                        <span>Use Case Units:</span>
+                                        <span id="useCaseUnits">0</span>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span>Service Units:</span>
+                                        <span id="serviceUnits">0</span>
+                                    </div>
+                                    <div class="breakdown-item" style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 8px; margin-top: 8px; font-weight: bold;">
+                                        <span>Total (Multiplied):</span>
+                                        <span id="calculatedTotal">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profit Margin Calculator -->
+                    <div class="container">
+                        <h2>Profit Margin Calculator</h2>
+                        
+                        <form id="profitForm">
+                            <div class="form-group">
+                                <label for="committedContract">Committed Contract</label>
+                                <select id="committedContract" name="committedContract" required>
+                                    <option value="">-- Select Committed Contract --</option>
+                                    <option value="10000">$10,000</option>
+                                    <option value="5000">$5,000</option>
+                                    <option value="25000">$25,000</option>
+                                    <option value="2000">$2,000</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="monthlyConsumption">Monthly Consumption</label>
+                                <select id="monthlyConsumption" name="monthlyConsumption" required>
+                                    <option value="">-- Select Monthly Consumption --</option>
+                                    <option value="0">$0</option>
+                                    <option value="2000">$2,000</option>
+                                    <option value="2500">$2,500</option>
+                                    <option value="165000">$165,000</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cogs">Cost Of Goods Sold (COGS)</label>
+                                <select id="cogs" name="cogs" required>
+                                    <option value="">-- Select COGS --</option>
+                                    <option value="1400">$1,400</option>
+                                    <option value="1750">$1,750</option>
+                                    <option value="8400">$8,400</option>
+                                    <option value="14000">$14,000</option>
+                                </select>
+                            </div>
+
+                            <div class="button-group">
+                                <button type="submit" class="calculate-pm-btn">Calculate PM</button>
+                            </div>
+                        </form>
+
+                        <div id="profitResult" class="result">
+                            <h3>Profit Margin Analysis:</h3>
+                            
+                            <div class="profit-margin-box">
+                                <h4>Profit Margin</h4>
+                                <div class="profit-value" id="profitMarginValue">$0</div>
+                                <div class="profit-details">calculated profit margin</div>
+                                
+                                <div class="breakdown">
+                                    <div class="breakdown-item">
+                                        <span>Committed Contract:</span>
+                                        <span id="displayCommitted">$0</span>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span>Monthly Consumption:</span>
+                                        <span id="displayConsumption">$0</span>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span>COGS:</span>
+                                        <span id="displayCOGS">$0</span>
+                                    </div>
+                                    <div class="breakdown-item" style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 8px; margin-top: 8px;">
+                                        <span>Condition:</span>
+                                        <span id="conditionUsed">-</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="formula-display" id="formulaDisplay">
+                                    Formula: Waiting for calculation...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graphs Row -->
+                <div class="graphs-row">
+                    <div class="graphs-container">
+                        <div class="image-container">
+                            <h3>Margin Trends By Product</h3>
+                            <img src="Margin_Trends_By_Product.png" alt="Margin Trends By Product">
+                            <p class="image-caption">Product-wise margin analysis and trends</p>
+                        </div>
+                        
+                        <div class="image-container">
+                            <h3>Monthly Consumption by Clients</h3>
+                            <img src="Monthly_Consumption_Clients.png" alt="Monthly Consumption by Clients">
+                            <p class="image-caption">Client consumption patterns over time</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Trends -->
+            <div id="trends" class="tab-content">
+                <div class="chart-container">
+                    <div class="chart-title">Monthly Consumption Trend by Service Type</div>
+                    <div id="trendChart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Revenue Recognition Type Distribution</div>
+                    <div id="revenueChart"></div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Analysis -->
+            <div id="analysis" class="tab-content">
+                <div class="chart-container">
+                    <div class="chart-title">Total Consumption by Service Type</div>
+                    <div id="serviceChart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Consumption Heatmap (Use Case × Service Type)</div>
+                    <div id="heatmapChart"></div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Comparison -->
+            <div id="comparison" class="tab-content">
+                <div class="chart-container">
+                    <div class="chart-title">Customer Consumption Comparison</div>
+                    <div id="customerChart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Top 10 Service-UseCase Combinations</div>
+                    <div id="topCombinationsChart"></div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Financial Metrics -->
+            <div id="financial" class="tab-content">
+                <div class="chart-container">
+                    <div class="chart-title">Profit Margin Trend by Customer</div>
+                    <div id="profitMarginChart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Revenue Recognized by Customer</div>
+                    <div id="revenueRecognizedChart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Monthly Consumption by Customer</div>
+                    <div id="monthlyConsumptionChart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Monthly COGS by Customer</div>
+                    <div id="monthlyCOGSChart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Customer Financial Summary</div>
+                    <div id="customerSummaryChart"></div>
+                </div>
+            </div>
+
+            <!-- Tab 6: Full Dashboard -->
+            <div id="dashboard" class="tab-content">
+                <div class="chart-container">
+                    <div class="chart-title">Comprehensive Analytics Dashboard</div>
+                    <div id="fullDashboard"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="chart_data.js"></script>
+    <script>
+        // Tab switching function
+        function openTab(evt, tabName) {
+            var i, tabcontent, tabbuttons;
+            
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            
+            tabbuttons = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tabbuttons.length; i++) {
+                tabbuttons[i].classList.remove("active");
+            }
+            
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+            
+            // Load charts when tabs are opened
+            if (tabName === 'trends') loadTrendCharts();
+            if (tabName === 'analysis') loadAnalysisCharts();
+            if (tabName === 'comparison') loadComparisonCharts();
+            if (tabName === 'financial') loadFinancialCharts();
+            if (tabName === 'dashboard') loadFullDashboard();
+        }
+
+        // Service Form Handler
+        const serviceForm = document.getElementById('serviceForm');
+        const resultDiv = document.getElementById('result');
+        const selectedUseCaseSpan = document.getElementById('selectedUseCase');
+        const selectedServiceSpan = document.getElementById('selectedService');
+        const totalConsumptionDiv = document.getElementById('totalConsumption');
+        const useCaseUnitsSpan = document.getElementById('useCaseUnits');
+        const serviceUnitsSpan = document.getElementById('serviceUnits');
+        const calculatedTotalSpan = document.getElementById('calculatedTotal');
+
+        serviceForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const useCaseSelect = document.getElementById('useCaseType');
+            const serviceSelect = document.getElementById('serviceType');
+            
+            const useCaseType = useCaseSelect.value;
+            const serviceType = serviceSelect.value;
+            
+            const useCaseValue = parseInt(useCaseSelect.options[useCaseSelect.selectedIndex].getAttribute('data-value'));
+            const serviceValue = parseInt(serviceSelect.options[serviceSelect.selectedIndex].getAttribute('data-value'));
+
+            if (useCaseType && serviceType) {
+                const monthlyConsumption = useCaseValue * serviceValue;
+                
+                selectedUseCaseSpan.textContent = useCaseType.replace(/_/g, ' ');
+                selectedServiceSpan.textContent = serviceType.replace(/_/g, ' ');
+                useCaseUnitsSpan.textContent = useCaseValue;
+                serviceUnitsSpan.textContent = serviceValue;
+                calculatedTotalSpan.textContent = monthlyConsumption;
+                totalConsumptionDiv.textContent = monthlyConsumption.toLocaleString();
+                
+                resultDiv.classList.add('show');
+            }
+        });
+
+        serviceForm.addEventListener('reset', function() {
+            resultDiv.classList.remove('show');
+        });
+
+        // Profit Margin Form Handler
+        const profitForm = document.getElementById('profitForm');
+        const profitResultDiv = document.getElementById('profitResult');
+        const profitMarginValueDiv = document.getElementById('profitMarginValue');
+        const displayCommittedSpan = document.getElementById('displayCommitted');
+        const displayConsumptionSpan = document.getElementById('displayConsumption');
+        const displayCOGSSpan = document.getElementById('displayCOGS');
+        const conditionUsedSpan = document.getElementById('conditionUsed');
+        const formulaDisplayDiv = document.getElementById('formulaDisplay');
+
+        profitForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const committedContract = parseFloat(document.getElementById('committedContract').value);
+            const monthlyConsumption = parseFloat(document.getElementById('monthlyConsumption').value);
+            const cogs = parseFloat(document.getElementById('cogs').value);
+
+            if (committedContract && cogs !== undefined && monthlyConsumption !== undefined) {
+                let profitMargin;
+                let formula;
+                
+                if (monthlyConsumption > committedContract) {
+                    profitMargin = monthlyConsumption - cogs;
+                    formula = `Profit Margin = Monthly Consumption - COGS = $${monthlyConsumption.toLocaleString()} - $${cogs.toLocaleString()} = $${profitMargin.toLocaleString()}`;
+                } else {
+                    profitMargin = committedContract - cogs;
+                    formula = `Profit Margin = Committed Contract - COGS = $${committedContract.toLocaleString()} - $${cogs.toLocaleString()} = $${profitMargin.toLocaleString()}`;
+                }
+                
+                profitMarginValueDiv.textContent = `$${profitMargin.toLocaleString()}`;
+                displayCommittedSpan.textContent = `$${committedContract.toLocaleString()}`;
+                displayConsumptionSpan.textContent = `$${monthlyConsumption.toLocaleString()}`;
+                displayCOGSSpan.textContent = `$${cogs.toLocaleString()}`;
+                conditionUsedSpan.textContent = monthlyConsumption > committedContract ? 'MC > CC' : 'MC ≤ CC';
+                formulaDisplayDiv.textContent = formula;
+                
+                profitResultDiv.classList.add('show');
+            }
+        });
+
+        // Chart loading flags
+        let trendsLoaded = false;
+        let analysisLoaded = false;
+        let comparisonLoaded = false;
+        let financialLoaded = false;
+        let dashboardLoaded = false;
+
+        function loadTrendCharts() {
+            if (trendsLoaded) return;
+            if (typeof chartData === 'undefined') {
+                console.error('Chart data not loaded');
+                return;
+            }
+            Plotly.newPlot('trendChart', chartData.trendData, chartData.trendLayout, {responsive: true});
+            Plotly.newPlot('revenueChart', chartData.revenueData, chartData.revenueLayout, {responsive: true});
+            trendsLoaded = true;
+        }
+
+        function loadAnalysisCharts() {
+            if (analysisLoaded) return;
+            if (typeof chartData === 'undefined') {
+                console.error('Chart data not loaded');
+                return;
+            }
+            Plotly.newPlot('serviceChart', chartData.serviceData, chartData.serviceLayout, {responsive: true});
+            Plotly.newPlot('heatmapChart', chartData.heatmapData, chartData.heatmapLayout, {responsive: true});
+            analysisLoaded = true;
+        }
+
+        function loadComparisonCharts() {
+            if (comparisonLoaded) return;
+            if (typeof chartData === 'undefined') {
+                console.error('Chart data not loaded');
+                return;
+            }
+            Plotly.newPlot('customerChart', chartData.customerData, chartData.customerLayout, {responsive: true});
+            Plotly.newPlot('topCombinationsChart', chartData.topCombData, chartData.topCombLayout, {responsive: true});
+            comparisonLoaded = true;
+        }
+
+        function loadFinancialCharts() {
+            if (financialLoaded) return;
+            if (typeof financialData === 'undefined') {
+                console.error('Financial data not loaded');
+                return;
+            }
+            Plotly.newPlot('profitMarginChart', financialData.profitMarginData, financialData.profitMarginLayout, {responsive: true});
+            Plotly.newPlot('revenueRecognizedChart', financialData.revenueRecognizedData, financialData.revenueRecognizedLayout, {responsive: true});
+            Plotly.newPlot('monthlyConsumptionChart', financialData.monthlyConsumptionData, financialData.monthlyConsumptionLayout, {responsive: true});
+            Plotly.newPlot('monthlyCOGSChart', financialData.monthlyCOGSData, financialData.monthlyCOGSLayout, {responsive: true});
+            Plotly.newPlot('customerSummaryChart', financialData.customerSummaryData, financialData.customerSummaryLayout, {responsive: true});
+            financialLoaded = true;
+        }
+
+        function loadFullDashboard() {
+            if (dashboardLoaded) return;
+            if (typeof chartData === 'undefined') {
+                console.error('Chart data not loaded');
+                return;
+            }
+            Plotly.newPlot('fullDashboard', chartData.dashboardData, chartData.dashboardLayout, {responsive: true});
+            dashboardLoaded = true;
+        }
+    </script>
+</body>
+</html>
