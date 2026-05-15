@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/python-39:1-1776086485
+FROM python:3
 
 # By default, listen on port 8081
 EXPOSE 8081/tcp
@@ -20,3 +20,4 @@ RUN \
 
 # Specify the command to run on container start
 CMD [ "python", "./app.py" ]
+
