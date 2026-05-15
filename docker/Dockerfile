@@ -1,7 +1,7 @@
 # Dockerfile for Service Selector Dashboard
 # Optimized for OpenShift Container Platform (OCP) deployment
 
-FROM python:3.12 
+FROM registry.access.redhat.com/ubi9/python-39:1-1776086485 
 
 # Set working directory
 WORKDIR /app
