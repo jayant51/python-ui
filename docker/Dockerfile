@@ -12,8 +12,8 @@ COPY . .
 
 # Install any dependencies
 RUN \
-  if [ -f requirements.txt ]; \
-    then pip install -r requirements.txt; \
+  if [ -f requirements_flask.txt ]; \
+    then pip install -r requirements_flask.txt; \
   elif [ `ls -1q *.txt | wc -l` == 1 ]; \
     then pip install -r *.txt; \
   fi
