@@ -1,52 +1,22 @@
-# Dockerfile for Service Selector Dashboard
-# Optimized for OpenShift Container Platform (OCP) deployment
+FROM registry.access.redhat.com/ubi9/python-39:1-1776086485
 
-FROM registry.access.redhat.com/ubi9/python-39:1-1776086485 
+# By default, listen on port 8081
+EXPOSE 8081/tcp
+ENV FLASK_PORT=8081
 
-# Set working directory
-WORKDIR /app
+# Set the working directory in the container
+WORKDIR /projects
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8080 \
-    HOST=0.0.0.0
-
-# Install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first for better caching
-COPY requirements_flask.txt .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements_flask.txt
-
-# Copy application files
-COPY app.py .
-COPY service_selector.html .
-COPY chart_data.js .
-
-# Copy any additional static files (copy all at once to avoid errors)
+# Copy the content of the local src directory to the working directory
 COPY . .
 
-# Create non-root user for security (OCP requirement)
-RUN useradd -m -u 1001 appuser && \
-    chown -R appuser:appuser /app
+# Install any dependencies
+RUN \
+  if [ -f requirements.txt ]; \
+    then pip install -r requirements.txt; \
+  elif [ `ls -1q *.txt | wc -l` == 1 ]; \
+    then pip install -r *.txt; \
+  fi
 
-# Switch to non-root user
-USER 1001
-
-# Expose port
-EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"
-
-# Run with gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "--threads", "2", "--timeout", "60", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
-
-# Made with Bob
+# Specify the command to run on container start
+CMD [ "python", "./app.py" ]
